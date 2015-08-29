@@ -64,18 +64,18 @@ class Message(object):
         """
             Packet size in bytes, minus the 'size' fields (4 bytes).
         """
-        return struct.calcsize(b"<ii") + len(self.body.encode("ascii")) + 2
+        return struct.calcsize(b"<ii") + len(self.body.encode("utf-8")) + 2
 
     def encode(self):
         """Encode the message to a bytestring
 
         Each packed message inludes the payload size (in bytes,) message ID
         and message type encoded into a 12 byte header. The header is followed
-        by a null-terimnated ASCII-encoded string and a further trailing null
+        by a null-terimnated UTF-8-encoded string and a further trailing null
         terminator.
         """
         return (struct.pack(b"<iii", self.size, self.id, self.type) +
-                self.body.encode("ascii") + b"\x00\x00")
+                self.body.encode("utf-8") + b"\x00\x00")
 
     @classmethod
     def decode(cls, buffer):
@@ -97,7 +97,7 @@ class Message(object):
         buffer = buffer[size + 4:]
         id = struct.unpack(b"<i", packet[4:8])[0]
         type = struct.unpack(b"<i", packet[8:12])[0]
-        body = packet[12:][:-2].decode("ascii", "ignore")
+        body = packet[12:][:-2].decode("utf-8", "ignore")
         return cls(id, type, body), buffer
 
 
@@ -186,7 +186,7 @@ class RCON(object):
         response, self._read_buffer = Message.decode(self._read_buffer)
         # Check if terminating RESPONSE_VALUE with body 00 01 00 00
         if (response.type == Message.SERVERDATA_RESPONSE_VALUE and
-                response.body.encode("ascii") == b"\x00\x01\x00\x00"):
+                response.body.encode("utf-8") == b"\x00\x01\x00\x00"):
             response = Message(self._response[0].id,
                                self._response[0].type,
                                "".join([r.body for r in self._response]))
